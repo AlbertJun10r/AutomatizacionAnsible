@@ -1,41 +1,64 @@
 ---
-- hosts: webservers
+- hosts: servers
   become: yes
   tasks:
-    - name: Actualizar cache de apt
-      apt: update_cache=yes force_apt_get=yes
-
+    - name: Actualizar caché de apt
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600  # Reduce el tiempo de validez del caché para evitar problemas en recursos limitados
+ 
     - name: Instalar Apache
-      apt: name=apache2 state=present
-
-    - name: Instalar Cowsay
-      apt: name=cowsay state=present
-
-    - name: Crear un archivo
+      apt:
+        name: apache2
+        state: present
+        install_recommends: no  # Evita la instalación de paquetes recomendados para reducir el uso de espacio
+ 
+    - name: Instalar cowsay
+      apt:
+        name: cowsay
+        state: present
+        install_recommends: no  # Evita la instalación de paquetes recomendados para reducir el uso de espacio
+ 
+    - name: Crear archivo en la máquina remota
       file:
-        path: /home/vagrant/archivo.txt
+        path: /home/vagrant/mi_archivo.txt
         state: touch
-
-    - name: Copiar archivos
+ 
+    - name: Crear archivo en la máquina remota para copiar
       copy:
-        src: /vagrant/mensaje.txt
-        dest: /home/vagrant/mensaje.txt
-
-    - name: Crear carpetas
+        content: "Contenido del archivo"
+        dest: /home/vagrant/mi_archivo.txt
+ 
+    - name: Copiar archivo en la máquina remota
+      copy:
+        src: /home/vagrant/mi_archivo.txt
+        dest: /home/vagrant/mi_archivo_copiado.txt
+        remote_src: yes  # Indica que el archivo fuente está en la máquina remota
+ 
+    - name: Crear carpeta en la máquina remota
       file:
-        path: /home/vagrant/nueva_carpeta
+        path: /home/vagrant/mi_carpeta
         state: directory
-
-    - name: Iniciar servicio Apache
+ 
+    - name: Iniciar servicio de Apache
       service:
         name: apache2
         state: started
-
-    - name: Agregar un usuario
+        enabled: yes
+ 
+    - name: Agregar usuario en la máquina remota
       user:
         name: nuevo_usuario
         state: present
-        shell: /bin/bash
-
-    - name: Ejecutar un script
-      command: /home/vagrant/script.sh
+        create_home: yes
+ 
+    - name: Crear script en la máquina remota
+      copy:
+        content: |
+          #!/bin/bash
+          echo "Este es un script de prueba"
+        dest: /home/vagrant/mi_script.sh
+        mode: '0755'
+ 
+    - name: Ejecutar script en la máquina remota
+      command: /home/vagrant/mi_script.sh
